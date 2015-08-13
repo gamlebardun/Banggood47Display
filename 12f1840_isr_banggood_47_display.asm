@@ -110,14 +110,14 @@ main
 calcLedData
     ; given ledValues, calculate ledSegments and ledDelays
         movlw ledStruct         ; pointer to the data structure
-        movwf FSR1L
+        movwf FSR1L             ; we will use indirect register 1
         movlw 0x04              ; four digits to process
         movwf temp
 calcLoop
-        moviw FSR1++            ; numeric value, offset = 0, point to segment
+        moviw FSR1++            ; w=numeric value, FSR offset = 1 (point to segments)
         call lookupSegments     ; convert to segments
-        movwi FSR1--            ; store in segment, offset = 1, point to num. value
-        moviw FSR1++            ; read numeric value again, point to offset segment
+        movwi FSR1--            ; store in segment, offset = 0 (point to num. value)
+        moviw FSR1++            ; read numeric value again, offset = 1
         call lookupDelay        ; get appropriate delay value
         movwi ++FSR1            ; and store in delay, offset 2
         decf FSR1, f            ; step back to offset 1
@@ -150,7 +150,7 @@ sendLoop
         rlf isrSegments, f      ; and beyond into high byte
         btfsc STATUS, C         ; C=1 ?
         bsf PORTA, din          ; yes, high data bit output
-        nop                     ; allw data line to stabilize
+        nop                     ; allow data line to stabilize high
         bsf PORTA, sclk         ; clock the bit in with a rising edge
         decfsz counter, f       ; all 16 bits done ?
         goto sendLoop           ; no, continue
